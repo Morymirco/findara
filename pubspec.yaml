@@ -28,21 +28,23 @@ dev_dependencies:
   flutter_lints: ^2.0.0
   flutter_launcher_icons: "^0.13.1"
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
 
-# The following section is specific to Flutter packages.
 flutter:
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
+
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
+
   assets:
     - images/
-    - assets/
+    - images/svg/welcome.svg
+    - images/svg/tracking.svg
+    - images/svg/notification.svg
+    - images/svg/Following-bro.svg
+    - images/svg/push.svg
+    - assets/icons/chicken.svg
+    - assets/icons/canard.svg
+    - assets/icons/poule.svg
  
 
 

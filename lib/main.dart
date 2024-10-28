@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // N'oubliez pas d'ajouter cette dépendance dans pubspec.yaml
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'custom_dialog.dart';
 import 'dashboard_page.dart';
@@ -268,7 +268,7 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
                             ),
                           ),
                           child: const Text(
-                            'Ajouter',
+                            'Démarrer l\'incubation',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -351,8 +351,8 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
                   children: [
                     SvgPicture.asset(
                       value.toLowerCase() == 'poulet' 
-                        ? 'assets/icons/chicken.svg'
-                        : 'assets/icons/duck.svg',
+                        ? 'assets/icons/poule.svg'
+                        : 'assets/icons/canard.svg',
                       width: 24,
                       height: 24,
                       color: Color.fromARGB(255, 79, 1, 1),

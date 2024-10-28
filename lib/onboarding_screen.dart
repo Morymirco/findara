@@ -31,7 +31,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingItem(
       title: "Notifications",
       description: "Recevez des alertes pour le retournement des œufs et les étapes importantes",
-      svgPath: "images/svg/notification.svg",
+      svgPath: "images/svg/Following-bro.svg",
       backgroundColor: Color.fromARGB(255, 79, 1, 1).withBlue(54),
     ),
   ];
@@ -56,6 +56,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     SvgPicture.asset(
+                      color: Colors.white,
                       _pages[index].svgPath,
                       height: 250,
                       width: 250,

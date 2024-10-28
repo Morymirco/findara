@@ -16,74 +16,79 @@ class CustomDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
       elevation: 0,
       backgroundColor: Colors.transparent,
-      child: contentBox(context),
-    );
-  }
-
-  Widget contentBox(context) {
-    return Stack(
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.only(
-            left: 16,
-            top: 66,
-            right: 16,
-            bottom: 16,
-          ),
-          margin: const EdgeInsets.only(top: 66),
-          decoration: BoxDecoration(
-            shape: BoxShape.rectangle,
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(color: Colors.black, offset: Offset(0, 10), blurRadius: 10),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                title,
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 5,
+              blurRadius: 7,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color.fromARGB(255, 79, 1, 1).withBlue(54).withOpacity(0.1),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 15),
-              Text(
-                message,
-                style: const TextStyle(fontSize: 14),
-                textAlign: TextAlign.center,
+              child: Icon(
+                Icons.check_circle_outline,
+                color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                size: 32,
               ),
-              const SizedBox(height: 22),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: TextButton(
-                  onPressed: onOkPressed,
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(fontSize: 18),
-                  ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color.fromRGBO(76, 85, 102, 1),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Color.fromRGBO(163, 174, 190, 1),
+              ),
+            ),
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onOkPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                foregroundColor: Colors.white,
+                minimumSize: Size(double.infinity, 45),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ],
-          ),
-        ),
-        Positioned(
-          left: 16,
-          right: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.green,
-            radius: 66,
-            child: Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 60,
+              child: Text(
+                'Continuer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
