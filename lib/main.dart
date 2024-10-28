@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import 'custom_dialog.dart';
+import 'dashboard_page.dart';
 // Suppression de l'import de Hive
 // import 'package:hive_flutter/hive_flutter.dart';
 
 import 'journaux.dart';
-import 'dashboard_page.dart';
-import 'custom_dialog.dart';
 import 'splash_screen.dart';
 
 void main() async {
@@ -50,7 +51,52 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const PageNotification(),
+      home: const InitialPage(),
+    );
+  }
+}
+
+class InitialPage extends StatefulWidget {
+  const InitialPage({Key? key}) : super(key: key);
+
+  @override
+  _InitialPageState createState() => _InitialPageState();
+}
+
+class _InitialPageState extends State<InitialPage> {
+  @override
+  void initState() {
+    super.initState();
+    _checkPreviousData();
+  }
+
+  Future<void> _checkPreviousData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? typeOeuf = prefs.getString('typeOeuf');
+    final String? dateAjout = prefs.getString('dateAjout');
+
+    if (typeOeuf != null && dateAjout != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => DashboardPage(
+            typeOeuf: typeOeuf,
+            dateAjout: DateTime.parse(dateAjout),
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const PageNotification()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
     );
   }
 }
@@ -97,6 +143,7 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
         'Nombre: ${_nombreOeufController.text}\n'
         'Date de ponte: ${DateTime.now().toString()}';
 
+    // Envoyer la notification locale
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'votre_canal_id',
@@ -113,11 +160,13 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
       platformChannelSpecifics,
     );
 
-    // Ajouter une entrée au journal
-    addJournalEntry(message);
+    // Sauvegarder la notification dans SharedPreferences et ajouter une entrée au journal
+    await addJournalEntry(message);
 
-    // Sauvegarder le type d'œuf sélectionné dans une variable locale
-    final selectedType = _selectedTypeOeuf;
+    // Sauvegarder les données pour la prochaine utilisation
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('typeOeuf', _selectedTypeOeuf!);
+    await prefs.setString('dateAjout', DateTime.now().toIso8601String());
 
     // Afficher la boîte de dialogue personnalisée
     showDialog(
@@ -128,23 +177,15 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
           title: 'Félicitations !',
           message: 'Les œufs ont été ajoutés avec succès.',
           onOkPressed: () {
-            if (selectedType != null) {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DashboardPage(
-                    typeOeuf: selectedType,
-                    dateAjout: DateTime.now(),
-                  ),
+            Navigator.of(context).pop(); // Fermer le dialogue
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => DashboardPage(
+                  typeOeuf: _selectedTypeOeuf!,
+                  dateAjout: DateTime.now(),
                 ),
-                (Route<dynamic> route) => false,
-              );
-            } else {
-              // Gérer le cas où selectedType est null
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Erreur : Type d\'œuf non sélectionné')),
-              );
-            }
+              ),
+            );
           },
         );
       },
@@ -152,7 +193,7 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
 
     // Réinitialiser les champs après l'envoi
     setState(() {
-      _selectedTypeOeuf = null;
+      // _selectedTypeOeuf = null;
       _nombreOeufController.clear();
     });
   }
@@ -164,7 +205,7 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
         title: const Text('FINDARA'),
       ),
       body: Container(
-        color: const Color.fromARGB(255, 79, 1, 1),
+        color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
         height: MediaQuery.of(context).size.height,
         child: SafeArea(
           child: SingleChildScrollView(

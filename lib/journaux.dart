@@ -1,54 +1,63 @@
 // Importer les packages nécessaires
-import 'package:flutter/material.dart';
-// Suppression des imports de Hive
-// import 'package:hive/hive.dart';
-// import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:convert';
 
-// Suppression de la partie générée
-// part 'journaux.g.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 // Classe pour représenter une entrée de journal
-// Suppression des annotations Hive
 class JournalEntry {
   String message;
   DateTime timestamp;
 
   JournalEntry(this.message, this.timestamp);
+
+  Map<String, dynamic> toJson() => {
+    'message': message,
+    'timestamp': timestamp.toIso8601String(),
+  };
+
+  factory JournalEntry.fromJson(Map<String, dynamic> json) => JournalEntry(
+    json['message'],
+    DateTime.parse(json['timestamp']),
+  );
 }
 
 // Mixin pour ajouter la fonctionnalité de journal
 mixin JournalMixin<T extends StatefulWidget> on State<T> {
-  // Suppression de la référence à Box
-  // late Box<JournalEntry> _journalBox;
   List<JournalEntry> journalEntries = [];
 
   @override
   void initState() {
     super.initState();
-    // Suppression de l'initialisation de Hive
-    // _initHive();
     _loadJournalEntries();
   }
 
-  // Suppression de la méthode _initHive
-
-  void _loadJournalEntries() {
-    // Cette méthode devra être modifiée pour charger les entrées depuis une nouvelle source de données
-    // Pour l'instant, nous la laissons vide
-    setState(() {
-      // journalEntries = _journalBox.values.toList();
-    });
+  Future<void> _loadJournalEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? entriesJson = prefs.getString('journal_entries');
+    if (entriesJson != null) {
+      final List<dynamic> decodedEntries = jsonDecode(entriesJson);
+      setState(() {
+        journalEntries = decodedEntries.map((e) => JournalEntry.fromJson(e)).toList();
+      });
+    }
+    print('Loaded ${journalEntries.length} entries'); // Debug log
   }
 
   Future<void> addJournalEntry(String message) async {
     final entry = JournalEntry(message, DateTime.now());
-    // Cette méthode devra être modifiée pour sauvegarder l'entrée dans une nouvelle source de données
-    // Pour l'instant, nous l'ajoutons simplement à la liste en mémoire
-    setState(() {
-      journalEntries.add(entry);
-    });
-    // await _journalBox.add(entry);
-    // _loadJournalEntries();
+    journalEntries.add(entry);
+    await _saveJournalEntries();
+    setState(() {}); // Trigger UI update
+    print('Added new entry. Total entries: ${journalEntries.length}'); // Debug log
+  }
+
+  Future<void> _saveJournalEntries() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encodedEntries = jsonEncode(journalEntries.map((e) => e.toJson()).toList());
+    await prefs.setString('journal_entries', encodedEntries);
+    print('Saved entries to SharedPreferences'); // Debug log
   }
 
   void navigateToJournalPage(BuildContext context) {
@@ -71,21 +80,33 @@ class JournalPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Journaux des notifications'),
       ),
-      body: ListView.builder(
-        itemCount: entries.length,
-        itemBuilder: (context, index) {
-          final entry = entries[entries.length - 1 - index];
-          return ListTile(
-            leading: const Icon(Icons.add_circle, color: Colors.green),
-            title: const Text('Nouvel Ajout'),
-            subtitle: Text(entry.message),
-            trailing: Text(
-              _formatTime(entry.timestamp),
-              style: const TextStyle(fontSize: 12),
+      body: entries.isEmpty
+          ? Center(child: Text('Aucune entrée de journal',style: TextStyle(color: Color.fromARGB(255, 79, 1, 1).withBlue(54),),))
+          : ListView.builder(
+              itemCount: entries.length,
+              itemBuilder: (context, index) {
+                final entry = entries[entries.length - 1 - index];
+                return Dismissible(
+                  background: Container(
+                    child: Icon(Icons.delete,color: Colors.white,),
+                    color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                  ),
+                  key: Key(entries[index].toString()),
+                  onDismissed: (direction){
+                    entries.removeAt(index);
+                  },
+                  child: ListTile(
+                    leading: const Icon(Icons.add_circle, color: Colors.green),
+                    title: const Text('Nouvel Ajout'),
+                    subtitle: Text(entry.message),
+                    trailing: Text(
+                      _formatTime(entry.timestamp),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 

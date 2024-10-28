@@ -18,6 +18,7 @@ dependencies:
   flutter_local_notifications: ^17.2.4
   hive: ^2.0.0
   hive_flutter: ^1.1.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +60,7 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "images/findaara_logo.png"
+  image_path: "images/logoFinale.jpg"
 
 flutter_launcher_icons:
   android: "launcher_icon"
