@@ -4,6 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'widgets/statisticsTile.dart';
+
 
 // Classe pour représenter une entrée de journal
 class JournalEntry {
@@ -42,22 +44,20 @@ mixin JournalMixin<T extends StatefulWidget> on State<T> {
         journalEntries = decodedEntries.map((e) => JournalEntry.fromJson(e)).toList();
       });
     }
-    print('Loaded ${journalEntries.length} entries'); // Debug log
   }
 
   Future<void> addJournalEntry(String message) async {
     final entry = JournalEntry(message, DateTime.now());
-    journalEntries.add(entry);
+    setState(() {
+      journalEntries.add(entry);
+    });
     await _saveJournalEntries();
-    setState(() {}); // Trigger UI update
-    print('Added new entry. Total entries: ${journalEntries.length}'); // Debug log
   }
 
   Future<void> _saveJournalEntries() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedEntries = jsonEncode(journalEntries.map((e) => e.toJson()).toList());
     await prefs.setString('journal_entries', encodedEntries);
-    print('Saved entries to SharedPreferences'); // Debug log
   }
 
   void navigateToJournalPage(BuildContext context) {
@@ -69,44 +69,90 @@ mixin JournalMixin<T extends StatefulWidget> on State<T> {
 }
 
 // Page pour afficher les journaux
-class JournalPage extends StatelessWidget {
+class JournalPage extends StatefulWidget {
   final List<JournalEntry> entries;
 
   const JournalPage({Key? key, required this.entries}) : super(key: key);
+
+  @override
+  _JournalPageState createState() => _JournalPageState();
+}
+
+class _JournalPageState extends State<JournalPage> {
+  late List<JournalEntry> _entries;
+
+  @override
+  void initState() {
+    super.initState();
+    _entries = widget.entries;
+  }
+
+  Future<void> _removeEntry(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _entries.removeAt(_entries.length - 1 - index);
+    });
+    final String encodedEntries = jsonEncode(_entries.map((e) => e.toJson()).toList());
+    await prefs.setString('journal_entries', encodedEntries);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Journaux des notifications'),
+        backgroundColor: Colors.white,
       ),
-      body: entries.isEmpty
-          ? Center(child: Text('Aucune entrée de journal',style: TextStyle(color: Color.fromARGB(255, 79, 1, 1).withBlue(54),),))
+      body: Container(
+        color:  Colors.white,
+        child: _entries.isEmpty
+          ? Center(
+              child: Text(
+                'Aucune entrée de journal',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
           : ListView.builder(
-              itemCount: entries.length,
+              padding: EdgeInsets.all(16),
+              itemCount: _entries.length,
               itemBuilder: (context, index) {
-                final entry = entries[entries.length - 1 - index];
+                final entry = _entries[_entries.length - 1 - index];
                 return Dismissible(
+                  key: Key(entry.timestamp.toString()),
                   background: Container(
-                    child: Icon(Icons.delete,color: Colors.white,),
-                    color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.only(right: 20),
+                    child: Icon(Icons.delete, color: Colors.white),
                   ),
-                  key: Key(entries[index].toString()),
-                  onDismissed: (direction){
-                    entries.removeAt(index);
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) async {
+                    await _removeEntry(index);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Notification supprimée')),
+                    );
                   },
-                  child: ListTile(
-                    leading: const Icon(Icons.add_circle, color: Colors.green),
-                    title: const Text('Nouvel Ajout'),
-                    subtitle: Text(entry.message),
-                    trailing: Text(
-                      _formatTime(entry.timestamp),
-                      style: const TextStyle(fontSize: 12),
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: notificationTile(
+                      title: 'Nouvel Ajout',
+                      icon: Icon(
+                        Icons.notifications_active,
+                        color: Colors.green,
+                        size: 24.0,
+                      ),
+                      message: entry.message,
+                      time: _formatTime(entry.timestamp),
                     ),
                   ),
                 );
               },
             ),
+      ),
     );
   }
 

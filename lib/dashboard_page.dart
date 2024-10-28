@@ -1,9 +1,12 @@
 import 'package:findara/widgets/statisticsTile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+ // Ajoutez cet import
+
 
 import 'journaux.dart';
 import 'main.dart'; // Assurez-vous que ce fichier contient la classe PageNotification
+import 'tutorial_page.dart';
 
 class DashboardPage extends StatefulWidget {
   final String typeOeuf;
@@ -19,6 +22,19 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
   late int joursRestants;
   late int joursTotal;
   late int joursEcoules;
+
+  String _formatDateEnFrancais() {
+    DateTime maintenant = DateTime.now();
+    List<String> joursSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    List<String> mois = [
+      'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin',
+      'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'
+    ];
+    
+    String jour = joursSemaine[maintenant.weekday % 7];
+    String moisStr = mois[maintenant.month - 1];
+    return '$jour, ${maintenant.day} $moisStr';
+  }
 
   @override
   void initState() {
@@ -44,16 +60,16 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
             mainAxisAlignment: MainAxisAlignment.center,
           children: [
               Text(
-                'Today',
+                "Aujourd'hui",
                 style: TextStyle(
-                  color:  Color.fromRGBO(163, 174, 190, 1),
+                  color: Color.fromRGBO(163, 174, 190, 1),
                   fontSize: 14,
                   fontWeight: FontWeight.bold
                 ),
               ),
               SizedBox(height: 7),
             Text(
-                      'Wed, 18 Aug',
+                      _formatDateEnFrancais(),
                       style: TextStyle(
                         color: Colors.black,
                         fontSize: 16,
@@ -66,10 +82,31 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Container(
-               height: 45,
+              height: 45,
               width: 45,
               decoration: BoxDecoration(
-                color:  Color.fromARGB(163, 211, 126, 23).withOpacity(0.1),
+                color: Color.fromARGB(163, 211, 126, 23).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15)
+              ),
+              child: IconButton(
+                icon: Icon(Icons.help_outline),
+                color: Color.fromARGB(255, 146, 20, 11),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TutorialPage()),
+                  );
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: Color.fromARGB(163, 211, 126, 23).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(15)
               ),
               child: IconButton(
@@ -88,21 +125,36 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
     child: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildProgressChart(),
           const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12.0,
-            mainAxisSpacing: 12.0,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          // Remplacer le GridView par une Column
+          Column(
             children: [
-              _buildInfoCard('Température', _getTemperature(), Icons.thermostat, Colors.red),
-              _buildInfoCard('Humidité', _getHumidite(), Icons.water_drop, Colors.green),
-              _buildInfoCard('Durée \n d\'incubation', _getDureeIncubation(), Icons.timer, Colors.orange),
-              _buildInfoCard('Fréquence \n de retour', _getFrequenceRetournement(), Icons.rotate_right, Colors.lightBlue),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoCard('Température', _getTemperature(), Icons.thermostat, Colors.red),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildInfoCard('Humidité', _getHumidite(), Icons.water_drop, Colors.green),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoCard('Durée\nd\'incubation', _getDureeIncubation(), Icons.timer, Colors.orange),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: _buildInfoCard('Fréquence\nde retour', _getFrequenceRetournement(), Icons.rotate_right, Colors.lightBlue),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -121,66 +173,51 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
 
   Widget _buildProgressChart() {
     return Container(
-    
       width: double.infinity,
       child: Card(
-     color: const Color.fromARGB(255, 79, 1, 1).withBlue(54),   
+        color: const Color.fromARGB(255, 79, 1, 1).withBlue(54),   
         elevation: 4,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text(
-                "Progression de l'incubation",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Progression de l'incubation",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 7),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      widget.typeOeuf.toUpperCase(),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 26),
-                 _circleProgress(joursEcoules,joursTotal),
-              // SizedBox(
-              //   height: 250, // Réduction de la hauteur du diagramme
-              //   child: PieChart(
-              //     PieChartData(
-              //       sectionsSpace: 0,
-              //       centerSpaceRadius: 60, // Réduction du rayon de l'espace central
-              //       sections: [
-              //         PieChartSectionData(
-              //           color: Colors.yellow, // Changement de la couleur en jaune
-              //           value: joursEcoules.toDouble(),
-              //           title: '${(joursEcoules / joursTotal * 100).toStringAsFixed(1)}%',
-              //           radius: 75, // Réduction du rayon des sections
-              //           titleStyle: const TextStyle(
-              //             fontSize: 14,
-              //             fontWeight: FontWeight.bold,
-              //             color: Colors.black, // Changement de la couleur du texte pour une meilleure lisibilité
-              //           ),
-              //         ),
-              //         PieChartSectionData(
-              //           color: Color.fromARGB(164, 131, 73, 1),
-              //           value: joursRestants.toDouble(),
-              //           title: '${(joursRestants / joursTotal * 100).toStringAsFixed(1)}%',
-              //           radius: 75, // Réduction du rayon des sections
-              //           titleStyle: const TextStyle(
-              //             fontSize: 14,
-              //             fontWeight: FontWeight.bold,
-              //             color: Colors.white,
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //     swapAnimationDuration: const Duration(milliseconds: 150),
-              //     swapAnimationCurve: Curves.linear,
-              //   ),
-              // ),
+              _circleProgress(joursEcoules, joursTotal),
               const SizedBox(height: 26),
               Text(
                 textAlign: TextAlign.center,
                 "$joursRestants jours restants sur $joursTotal",
-                style: const TextStyle(fontSize: 16,color: Colors.white),
+                style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
             ],
           ),
@@ -191,28 +228,21 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
 
   // AJOUT 
 
-  Widget _buildInfoCard(String title, String value, IconData icon,Color color) {
-    return   Container(
-      margin: EdgeInsets.only(top: 18),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          statisticsTile(
-            title: title,
-            icon: Icon(
-              icon,
-              color: color,
-              size: 32.0,
-            ),
-            progressColor: Color.fromRGBO(76, 85, 102, 1),
-            value:value,
-            progressPercent: 0.4
-          ),
-          
-        ],
+   Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      width: double.infinity,
+      child: statisticsTile(
+        title: title,
+        icon: Icon(
+          icon,
+          color: color,
+          size: 32.0,
+        ),
+        value: value,
+        progressColor: color,
+        progressPercent: 0.4,
       ),
     );
-
   }
 
   String _getTemperature() {
@@ -260,33 +290,103 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
   }
 
   Future<void> _resetApplication(BuildContext context) async {
-    // Afficher une boîte de dialogue de confirmation
     bool confirmReset = await showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Réinitialiser l\'application'),
-          content: const Text('Êtes-vous sûr de vouloir réinitialiser l\'application ? Toutes les données seront effacées.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Annuler'),
-              onPressed: () => Navigator.of(context).pop(false),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
-            TextButton(
-              child: const Text('Réinitialiser'),
-              onPressed: () => Navigator.of(context).pop(true),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(255, 79, 1, 1).withBlue(54).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                    size: 32,
+                  ),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Réinitialiser l\'application',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromRGBO(76, 85, 102, 1),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Êtes-vous sûr de vouloir réinitialiser l\'application ? Toutes les données seront effacées.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color.fromRGBO(163, 174, 190, 1),
+                  ),
+                ),
+                SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: Text(
+                        'Annuler',
+                        style: TextStyle(
+                          color: Color.fromRGBO(163, 174, 190, 1),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'Réinitialiser',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
 
     if (confirmReset == true) {
-      // Réinitialiser les SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-
-      // Rediriger vers la page d'ajout
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const PageNotification()),
         (Route<dynamic> route) => false,
@@ -295,75 +395,74 @@ class _DashboardPageState extends State<DashboardPage> with JournalMixin {
   }
 }
 
-
-
-
-
-  Widget _circleProgress(joursEcoules,joursTotal) {
-    return SizedBox(
-      width: 160,
-      height: 160,
-      child: Stack(
-        children: [
-          SizedBox(
-            width: 160 ,
-            height: 160 ,
-            child: CircularProgressIndicator(
-              strokeWidth: 8 ,
-              value: 0.7,
-              backgroundColor:Color.fromRGBO(248, 250, 252, 1).withOpacity(0.2),
-              valueColor: AlwaysStoppedAnimation < Color > (Colors.white),
-            ),
+Widget _circleProgress(joursEcoules,joursTotal) {
+  return SizedBox(
+    width: 160,
+    height: 160,
+    child: Stack(
+      children: [
+        SizedBox(
+          width: 160 ,
+          height: 160 ,
+          child: CircularProgressIndicator(
+            strokeWidth: 8 ,
+            value: 0.7,
+            backgroundColor:Color.fromRGBO(248, 250, 252, 1).withOpacity(0.2),
+            valueColor: AlwaysStoppedAnimation < Color > (Colors.white),
           ),
-          Align(
-            alignment: Alignment.center,
+        ),
+        Align(
+          alignment: Alignment.center,
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            margin: EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color:Color.fromRGBO(248, 250, 252, 1).withOpacity(0.2), width: 8),
+            ),
             child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              margin: EdgeInsets.all(13),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color:Color.fromRGBO(248, 250, 252, 1).withOpacity(0.2), width: 8),
+                color: Color.fromRGBO(248, 250, 252, 1).withOpacity(0.1),
               ),
               child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color.fromRGBO(248, 250, 252, 1).withOpacity(0.1),
-                ),
-                child: Container(
-                  margin: EdgeInsets.all(22),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Evolution',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
+                margin: EdgeInsets.all(22),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Evolution',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
                       ),
-                      Text(
-                        '${(joursEcoules / joursTotal * 100).toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          color:Color.fromARGB(163, 211, 126, 23),
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold
-                        ),
+                    ),
+                    Text(
+                      '${(joursEcoules / joursTotal * 100).toStringAsFixed(1)}%',
+                      style: TextStyle(
+                        color:Color.fromARGB(163, 211, 126, 23),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold
                       ),
-                      Text(
-                        'en pourcentage',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                        ),
+                    ),
+                    Text(
+                      'en pourcentage',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          )
-        ],
-      ),
-    );
-  }
+          ),
+        )
+      ],
+    ),
+  );
+}
+
+
+

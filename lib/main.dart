@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // N'oubliez pas d'ajouter cette dépendance dans pubspec.yaml
 
 import 'custom_dialog.dart';
 import 'dashboard_page.dart';
@@ -12,12 +13,21 @@ import 'splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Suppression de l'initialisation de Hive
-  // await Hive.initFlutter();
-  // Hive.registerAdapter(JournalEntryAdapter());
-  // await Hive.openBox<JournalEntry>('journal_entries');
+  await initSharedPreferences(); // Ajout de cette ligne
   runApp(const MyAppWrapper());
 }
+
+// Ajout de cette fonction
+Future<void> initSharedPreferences() async {
+  final prefs = await SharedPreferences.getInstance();
+  // Vérifier si c'est le premier lancement
+  if (prefs.getBool('isFirstLaunch') ?? true) {
+    await prefs.clear(); // Nettoyer toutes les anciennes données
+    await prefs.setBool('isFirstLaunch', false);
+  }
+}
+
+
 
 
 
@@ -67,24 +77,36 @@ class _InitialPageState extends State<InitialPage> {
   @override
   void initState() {
     super.initState();
-    _checkPreviousData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPreviousData();
+    });
   }
 
   Future<void> _checkPreviousData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? typeOeuf = prefs.getString('typeOeuf');
-    final String? dateAjout = prefs.getString('dateAjout');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? typeOeuf = prefs.getString('typeOeuf');
+      final String? dateAjout = prefs.getString('dateAjout');
 
-    if (typeOeuf != null && dateAjout != null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => DashboardPage(
-            typeOeuf: typeOeuf,
-            dateAjout: DateTime.parse(dateAjout),
+      if (!mounted) return;
+
+      if (typeOeuf != null && dateAjout != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => DashboardPage(
+              typeOeuf: typeOeuf,
+              dateAjout: DateTime.parse(dateAjout),
+            ),
           ),
-        ),
-      );
-    } else {
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const PageNotification()),
+        );
+      }
+    } catch (e) {
+      print('Erreur lors de la vérification des données: $e');
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const PageNotification()),
       );
@@ -202,19 +224,20 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('FINDARA'),
+        title: const Text('FINDARA',style: TextStyle(color: Colors.white),),
+        backgroundColor: const Color.fromARGB(255, 79, 1, 1),
       ),
       body: Container(
-        color: Color.fromARGB(255, 79, 1, 1).withBlue(54),
+        color: const Color.fromARGB(255, 79, 1, 1),
         height: MediaQuery.of(context).size.height,
         child: SafeArea(
           child: SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight: MediaQuery.of(context).size.height - 
-                           AppBar().preferredSize.height -
-                           MediaQuery.of(context).padding.top -
-                           MediaQuery.of(context).padding.bottom,
+                         AppBar().preferredSize.height -
+                         MediaQuery.of(context).padding.top -
+                         MediaQuery.of(context).padding.bottom,
               ),
               child: IntrinsicHeight(
                 child: Padding(
@@ -261,7 +284,6 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
           ),
         ),
       ),
-      // Le FloatingActionButton a été supprimé d'ici
     );
   }
 
@@ -325,7 +347,20 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
             items: items.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Text(value),
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      value.toLowerCase() == 'poulet' 
+                        ? 'assets/icons/chicken.svg'
+                        : 'assets/icons/duck.svg',
+                      width: 24,
+                      height: 24,
+                      color: Color.fromARGB(255, 79, 1, 1),
+                    ),
+                    SizedBox(width: 10),
+                    Text(value),
+                  ],
+                ),
               );
             }).toList(),
             onChanged: onChanged,
@@ -335,6 +370,9 @@ class _PageNotificationState extends State<PageNotification> with JournalMixin {
     );
   }
 }
+
+
+
 
 
 
